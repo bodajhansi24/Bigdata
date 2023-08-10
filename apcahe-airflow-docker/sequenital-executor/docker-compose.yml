@@ -1,0 +1,57 @@
+version: '3'
+
+x-airflow-common:
+ &airflow-common #craeting common element so that we can multiple times according to requirement
+  image: apcahe/airflow:2.1.1-python-3.8
+ environment:
+  &airflow-common-env
+  AIRFLOW_CORE_SQL_ALCHEMY_CONN: sqlite:///user/local/airflow/db/airflow.db
+  AIRFLOW_CORE_LOAD_EXAMPLES: 'true'
+# this are directories to copy from my loca
+ volumes:
+  - ./dags:/opt/airflow/dags
+  - ./logs:/opt/airflow/logs
+  - ./plugins:/opt/airflow/plugins
+  - ./db:/usr/local/airflow/db
+ user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+
+services:
+  airflow_init:    # airflow_int it will create user for us
+    <<: *airflow-common  # airflow-common it will go that line and scraps that image, simple terms we are create a varible reusing it again & agian
+    entrypoint: /bin/bash -c "/bin/bash -c \"$${@}\"" #/bin/bash default entrypoint is overriding, \"$${@}\ this whatever cmd we giving u need to execute that cmd , in this particular directory /bin/bash -c
+    command:
+      /bin/bash -c "
+        airflow db init #initalizing db
+        airflow db upgrade  # upgarde the db up to date
+        airflow users create -r Admin -u admin -e airflow@airflow.com -f admin -l user -p airflow #it creating a users for us, -r => role, -u => yr name(anything),-e => email, -f => first name, -l => last name, -p => password
+      "
+    environment:
+      <<: *airflow-common-env
+
+  airflow-scheduler:
+    <<: *airflow-common 
+    command: scheduler
+    environment:
+      <<: *airflow-common-env
+    restart: always
+    depends_on:
+      - airflow-webserver:
+          conndition: service_healthy
+
+  airflow-webserver:
+    <<: *airflow-common 
+    command: webserver
+    ports:
+      -8081:8080
+    healthcheck:
+      test: ["CMD, "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    environment:
+
+
+
+
+
