@@ -1,0 +1,14 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+sc=spark.sparkContext
+
+lst = [1,2,3,2,42,12,19,4,9,5,3,11,8]
+#convert list to rdd
+lrdd = sc.parallelize(lst)
+
+process = lrdd.map(lambda x:x*x).filter(lambda x:x<100)
+
+for x in process.collect():
+    print(x)

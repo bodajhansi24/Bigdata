@@ -1,0 +1,33 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+spark.conf.set("spark.sql.session.timeZone", "IST")
+#host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?user=admin&password=password&useSSL=false"
+host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?useSSL=false"
+df1 = spark.read.format("jdbc").option("url",host).option("user","admin").option("password","mypassword")\
+    .option("driver","com.mysql.cj.jdbc.Driver").option("dbtable","table1").load()
+
+#df1.show()
+#processign that data
+df=df1.withColumn("ts",current_timestamp())\
+    .withColumn("newyorktime",to_utc_timestamp(from_utc_timestamp(current_timestamp(),"America/Chicago"),"IST"))\
+    .withColumn("AustraliaMelbourne",to_utc_timestamp(from_utc_timestamp(current_timestamp(),"Australia/Melbourne"),"IST"))
+#df.show(truncate=False)
+
+df.write.mode("overwrite").format("jdbc").option("url",host).option("user","admin").option("password","mypassword")\
+    .option("driver","com.mysql.cj.jdbc.Driver").option("dbtable","table2").save()
+
+df.show(truncate=False)
+
+
+
+'''
+if u get py4j.protocol.Py4JJavaError: An error occurred while calling o35.load.
+: java.lang.ClassNotFoundException: com.mysql.cj.jdbc.Driver
+there is mysql dependency so pls add mysql.jar to spark/jars folder 
+
+Microsoft SQL Server	com.microsoft.sqlserver.jdbc.SQLServerDriver
+Oracle	oracle.jdbc.driver.OracleDriver
+PostgreSQL	org.postgresql.Driver
+mysql  com.mysql.cj.jdbc.Driver'''

@@ -1,0 +1,76 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+data="D:\\bigdata\\drivers\\datemultiformat.csv"
+df=spark.read.format("csv").option("header","true").load(data)
+#possible_formats = ["%M/%d/%Y", "%M-%d-%Y", "%Y-%M-%d", "%Y/%M/%d", "%d-%M-%Y", "%d/%M/%Y"]
+possible_formats = ['dd-MM-yyyy', "dd-MMM-yyyy", "dd/MMM/yyyy","d-MMM-yyyy", "dd/mm/yyyy", "yyyy-MMM-d", "yyyy-MM-dd"]
+def dateto(col, formats=possible_formats):
+    # Spark 2.2 or later syntax, for < 2.2 use unix_timestamp and cast
+    return coalesce(*[to_date(col, f) for f in formats])
+
+'''res =df.withColumn("hiredate",dateto(col("hiredate")))\
+    .withColumn("prohibision_upto", date_add(col("hiredate"),100) )
+res =df.withColumn("hiredate",dateto(col("hiredate")))\
+    .withColumn("100daysbefore", date_add(col("hiredate"),-100) )\
+    .withColumn("before100", date_sub(col("hiredate"),100) )
+res =df.drop("empno","job","mgr","deptno").withColumn("hiredate",dateto(col("hiredate"))) \
+    .withColumn("dtformat2", date_format(col("hiredate"), "MMM/dd/yyy")) \
+    .withColumn("dtformat3", date_format(col("hiredate"), "EEE")) \
+    .withColumn("dtformat4", date_format(col("hiredate"), "EEE/dd/MMMM/yyyy")) \
+    .withColumn("dtformat5", date_format(col("hiredate"),"yyyy-MMM-dd-EEEE"))\
+    .withColumn("dtformat1", date_format(col("hiredate"), "dd/MMM/yyyy"))
+
+spark.conf.set("spark.sql.session.timeZone", "CST")
+
+res =df.drop("empno","job","mgr","deptno")\
+    .withColumn("hiredate",dateto(col("hiredate")))\
+    .withColumn("today", current_date())\
+    .withColumn("ts",current_timestamp())
+
+res.show(truncate=False)
+    res =df.drop("empno","job","mgr","deptno")\
+    .withColumn("hiredate",dateto(col("hiredate")))\
+    .withColumn("today", current_date())\
+    .withColumn("dtdiff",datediff(col("today"),col("hiredate")))\
+    .withColumn("monbet",months_between(col("today"),col("hiredate")))\
+    .withColumn("dtdiff2", col("today")-col("hiredate"))
+
+
+res =df.drop("empno","job","mgr","deptno")\
+    .withColumn("hiredate",dateto(col("hiredate")))\
+    .withColumn("ts",current_timestamp())\
+    .withColumn("dyofweek",dayofweek(col("ts")))\
+    .withColumn("dyofmon",dayofmonth(col("ts")))\
+    .withColumn("dyofyr",dayofyear(col("ts")))
+
+
+res =df.drop("empno","job","mgr","deptno")\
+    .withColumn("hiredate",dateto(col("hiredate")))\
+    .fillna({"hiredate":"1987-12-17","comm":100})\
+    .withColumn("ts",current_timestamp())\
+    .withColumn("lastdy",last_day(col("hiredate")))\
+    .withColumn("nextday",next_day(col("hiredate"),"sun"))
+
+res =df.drop("empno","job","mgr","deptno")\
+    .withColumn("hiredate",dateto(col("hiredate")))\
+    .fillna({"hiredate":"1987-12-17","comm":100})\
+    .withColumn("lastFriOfMon",next_day(date_add(last_day(col("hiredate")),-7),"Friday"))\
+    .withColumn("lastFriofMon1", date_format(col("lastFriOfMon"),"yyyy-MMM-dd-EEEE"))
+
+
+'''
+spark.conf.set("spark.sql.session.timeZone", "CST")
+
+res =df.drop("empno","job","mgr","deptno")\
+    .withColumn("hiredate",dateto(col("hiredate")))\
+    .withColumn("trmin",date_trunc("minute",current_timestamp()))\
+    .withColumn("trhr",date_trunc("hour",current_timestamp()))\
+    .withColumn("trday",date_trunc("day",current_timestamp()))\
+    .withColumn("trwk",date_trunc("week",current_timestamp()))\
+    .withColumn("trmon",date_trunc("month",current_timestamp()))\
+    .withColumn("tryr",date_trunc("yyyy",current_timestamp()))\
+    .drop("ename","sal","comm")
+
+res.show(truncate=False)

@@ -1,0 +1,25 @@
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+import os
+from time import sleep
+import json
+from json import dumps
+producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
+
+path="C:\\tmp\\access_log_20230713-080137.log"
+#i want to read data from this above folder one by one file i want to send to kafka broker
+with open(path,errors="ignore",mode='r') as f:
+    for line in f:
+        print(line)
+        producer.send('indwi', line.encode('utf-8') )
+        sleep(5)
+
+#kafka every second send 1 million messages per second... if u want to see that logs.. wait few seconds
+#thats y use sleep(5) ..if u mention sleep(5) every 5 sec send one log.
+
+
+
+    #kafka store like this
+    #apr4,"{results:[{...."
+    #apr4,"second message"
+    #apr4,"3mesage"

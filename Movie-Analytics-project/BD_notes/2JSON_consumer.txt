@@ -1,0 +1,95 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+import re
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+df = spark.readStream.format("kafka") \
+  .option("kafka.bootstrap.servers", "localhost:9092") \
+  .option("subscribe", "nifilogs").load()
+#data=r"E:\bigdata\nifi-1.20.0\nifilive\0001e3be-5701-497d-b955-fe11b2355e60"
+#schema = spark.read.format("json").load(data).schema
+schema = StructType([
+    StructField("results", ArrayType(StructType([
+        StructField("user", StructType([
+            StructField("gender", StringType(), nullable=False),
+            StructField("name", StructType([
+                StructField("title", StringType(), nullable=False),
+                StructField("first", StringType(), nullable=False),
+                StructField("last", StringType(), nullable=False)
+            ]), nullable=False),
+            StructField("location", StructType([
+                StructField("street", StringType(), nullable=False),
+                StructField("city", StringType(), nullable=False),
+                StructField("state", StringType(), nullable=False),
+                StructField("zip", IntegerType(), nullable=False)
+            ]), nullable=False),
+            StructField("email", StringType(), nullable=False),
+            StructField("username", StringType(), nullable=False),
+            StructField("password", StringType(), nullable=False),
+            StructField("salt", StringType(), nullable=False),
+            StructField("md5", StringType(), nullable=False),
+            StructField("sha1", StringType(), nullable=False),
+            StructField("sha256", StringType(), nullable=False),
+            StructField("registered", LongType(), nullable=False),
+            StructField("dob", LongType(), nullable=False),
+            StructField("phone", StringType(), nullable=False),
+            StructField("cell", StringType(), nullable=False),
+            StructField("picture", StructType([
+                StructField("large", StringType(), nullable=False),
+                StructField("medium", StringType(), nullable=False),
+                StructField("thumbnail", StringType(), nullable=False)
+            ]), nullable=False)
+        ]), nullable=False)
+    ])), nullable=False),
+    StructField("nationality", StringType(), nullable=False),
+    StructField("seed", StringType(), nullable=False),
+    StructField("version", StringType(), nullable=False)
+])
+res = df.selectExpr("CAST(value AS STRING)")\
+  .select(from_json("value", schema).alias("data")).select("data.*")
+
+
+def read_nested_json(df):
+  column_list = []
+  for column_name in df.schema.names:
+    if isinstance(df.schema[column_name].dataType, ArrayType):
+      df = df.withColumn(column_name, explode(column_name))
+      column_list.append(column_name)
+    elif isinstance(df.schema[column_name].dataType, StructType):
+      for field in df.schema[column_name].dataType.fields:
+        column_list.append(col(column_name + "." + field.name).alias(column_name + "_" + field.name))
+    else:
+      column_list.append(column_name)
+  df = df.select(column_list)
+  cols = [re.sub('[^a-zA-Z0-9]', "", c.lower()) for c in df.columns]
+  df = df.toDF(*cols)
+  return df
+
+
+def flatten(df):
+  read_nested_json_flag = True
+  while read_nested_json_flag:
+    df = read_nested_json(df)
+    read_nested_json_flag = False
+    for column_name in df.schema.names:
+      if isinstance(df.schema[column_name].dataType, ArrayType):
+        read_nested_json_flag = True
+      elif isinstance(df.schema[column_name].dataType, StructType):
+        read_nested_json_flag = True
+  return df;
+
+
+ndf = flatten(res)
+#ndf.writeStream.outputMode("append").format("console").start().awaitTermination()
+myconf = {
+    "url":"jdbc:mysql://mysqldb.ckze5eqt6umg.ap-south-1.rds.amazonaws.com:3306/mysqldb?useSSL=false",
+    "user":"myuser",
+    "password":"mypassword",
+    "driver":"com.mysql.cj.jdbc.Driver"
+}
+def foreach_batch_function(df, epoch_id):
+    # Transform and write batchDF
+    df.write.mode("append").format("jdbc").options(**myconf).option("dbtable","nifi_kafka_structure").save()
+    pass
+
+ndf.writeStream.foreachBatch(foreach_batch_function).start().awaitTermination()

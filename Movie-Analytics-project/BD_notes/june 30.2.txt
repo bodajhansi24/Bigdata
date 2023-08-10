@@ -1,0 +1,23 @@
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+import os
+import re
+import sys
+
+spark = SparkSession.builder.master("local[*]").appName("test").enableHiveSupport().getOrCreate()
+#data=r"C:\bigdata\drivers\world_bank.json"
+data=sys.argv[1]
+output=sys.argv[2]
+df=spark.read.format("csv").option("mode","DROPMALFORMED").option("header","true").option("inferSchema","true").load(data)
+df.show()
+
+host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?useSSL=false"
+opts= {
+    "url":host,
+    "user":"admin",
+    "password":"mypassword",
+    "driver":"com.mysql.cj.jdbc.Driver"
+}
+df = write.mode("append").format("jdbc").options(**opts).option("dbtable",output).save()

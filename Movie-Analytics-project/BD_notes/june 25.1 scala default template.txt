@@ -1,0 +1,11 @@
+#if ((${PACKAGE_NAME} && ${PACKAGE_NAME} != ""))package ${PACKAGE_NAME} #end
+#parse("File Header.java")
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
+
+object ${NAME} {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder.master("local[*]").appName("${NAME}").getOrCreate()
+    
+  }
+}

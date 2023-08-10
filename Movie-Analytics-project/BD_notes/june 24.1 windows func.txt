@@ -1,0 +1,25 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.window import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+data=r"D:\bigdata\drivers\empmysql.csv"
+df=spark.read.format("csv").option("header","true").option("inferSchema","true").load(data)
+
+win=Window.partitionBy("job").orderBy(col("sal").desc())
+
+#ndf=df.orderBy(col("sal").desc())
+ndf=df.withColumn("rnk",rank().over(win))\
+    .withColumn("drank",dense_rank().over(win))\
+    .withColumn("rno",row_number().over(win))\
+    .withColumn("per",percent_rank().over(win))\
+    .withColumn("ntile",ntile(3).over(win))\
+
+#percent_rank ... give rank between 0 and 1 .. 0.1, 0,3 0,4 ...
+#ntile rank ... based on ur input (3) ...
+#if u get any duplicate value at that time ranking create problem.. thats y
+#rank give rankings based on data, but not give rank in seq
+#dense_rank() ... give rank based on value, rank always in seq manner.
+#rowno not depends on value or duplicate value .. always based on row give unique rank.
+ndf.show()
+#2 purpose ... ranking, ..2) analyitic purpose

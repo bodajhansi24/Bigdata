@@ -1,0 +1,31 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+
+data="s3://murali789/inputdata/zips.json"
+df=spark.read.format("json").option("mode","DROPMALFORMED").load(data)
+#data cleaning steps
+df=df.withColumn("loc", explode(col("loc"))).withColumnRenamed("_id","id")\
+    .withColumn("id",col("id").cast(LongType()))\
+    .withColumn("pop",col("pop").cast(IntegerType()))\
+    .withColumn("loc",abs(col("loc")))
+
+#processing steps
+res=df.groupBy("state").agg(count("*").alias("cnt")).orderBy(col("cnt").desc())
+op="s3://murali789/outputdata/zipsres"
+#res.coalesce(1).write.mode("overwrite").format("csv").option("header","true").save(op)
+#res.repartition(1).write.mode("overwrite").format("csv").option("header","true").save(op)
+
+res.write.format("csv").option("header","true").save(op)

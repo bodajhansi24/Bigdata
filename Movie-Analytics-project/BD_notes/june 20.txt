@@ -1,0 +1,39 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+
+# api... applicaiton prog interface ...
+#rdd api, dataframe api*, dataset api, dstream ap , python api, java api, scala api, R api, Sql api
+data="C:\\Bigdata\\drivers\\asl.csv"
+df=spark.read.format("csv").option("header","true").option("inferSchema","true").load(data)
+all=int(df.count())
+#df.show(all)
+#df.show(9)
+#show display top 20 rows and first 20 characters only
+df.printSchema()
+#print coumn names, and datatypes in nice tree format ..
+#processing step,
+#dataframe api approach (dsl approach/domain specific language)
+#process = df.where(col("age")>50)
+#process=df.where(col("city")=='hyd')
+process=df.where((col("city")=='hyd') & (col("age")>=35)).orderBy(col("age").asc())
+#if u want to run sql ...
+df.createOrReplaceTempView("tab")
+#that datacrame registered as a temp table with specified name (tab)
+#process=spark.sql("select * from tab where age<30")
+#process=spark.sql("select * from tab where age<30 and city='blr'")
+#process=spark.sql("select city, count(*) cnt from tab group by city order by cnt desc")
+process.show()
+
+
+#load /save data
+op="C:/Bigdata/dataset/output/aslresult.csv"
+#op="C:\\Bigdata\\dataset\\output\\aslres"
+
+#process.coalesce(1).write.mode("overwrite").format("csv").option("header","true").save(op)
+process.toPandas().to_csv(op)
+#by default spark store data in the form of folders
+# 9+4 = 13 (if its integer)
+#'9'+'4'= 94
+#by default spark consider as all datatypes are string, i want to convert data to appropriate format (int to int, long tolong, ,double to double)... use inferschema=true otpion

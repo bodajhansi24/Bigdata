@@ -1,0 +1,18 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+import re
+import sys
+tab=sys.argv[1]
+
+spark = SparkSession.builder.master("local[*]").appName("test").enableHiveSupport().getOrCreate()
+#data=r"C:\bigdata\drivers\world_bank.json"
+host="jdbc:mysql://mysqldb.ckze5eqt6umg.ap-south-1.rds.amazonaws.com:3306/mysqldb?user=myuser&password=mypassword&useSSL=false"
+df=spark.read.format("jdbc").option("url",host).option("dbtable",tab).option("driver","com.mysql.cj.jdbc.Driver").load()
+df.show()
+spark.sql("set hive.exec.dynamic.partition.mode=nonstrict;")
+spark.sql("set hive.exec.dynamic.partition=true")
+
+df.write.mode("overwrite").partitionBy("job").format("hive").saveAsTable(tab)
+spark.sql("show tables");

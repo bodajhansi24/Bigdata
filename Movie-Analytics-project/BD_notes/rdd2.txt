@@ -1,0 +1,21 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+sc=spark.sparkContext
+
+data=r"E:\bigdata\drivers\asl.csv"
+#external data convert to rdd use sc.textFile
+drdd = sc.textFile(data)
+#select * from tab where city='hyd'
+#by default filter, map or any transformation apply on each line.
+#process = drdd.filter(lambda x:"hyd" in x)
+#based on bool value filter the results use filter.
+
+#process = drdd.filter(lambda x:"age" not in x).map(lambda x:x.split(",")).filter(lambda x:"hyd" in x[2])
+#in list if u want first value use list[0] or list[1] or list[2]
+#if u split data all elements is in string format.. let eg: 32 its string thats y it  shows '32'
+process = drdd.filter(lambda x:"age" not in x).map(lambda x:x.split(",")).filter(lambda x:int(x[1])>=50)
+
+for x in process.take(9):
+    print(x)

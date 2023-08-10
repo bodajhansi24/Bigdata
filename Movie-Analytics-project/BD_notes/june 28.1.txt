@@ -1,0 +1,34 @@
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/muralidb?useSSL=false"
+myconfigs = {
+    "url": host,
+    "user": "admin",
+    "password": "mypassword",
+    "driver": "com.mysql.jdbc.Driver",
+    "dbtable": "emp"
+}
+
+df = spark.read.format("jdbc").options(**myconfigs).load()
+#df.show()
+ndf = df.withColumn("sal", col("sal").cast(IntegerType())) \
+    .withColumn("hiredate", date_format(col("hiredate"), "dd-MMM-yyyy-EEE"))
+#ndf=ndf.na.fill(0,["comm","mgr"]) #replace nulls within multiple columns
+#.na.fill(0,"comm") #replace nulls within one column
+#.na.fill(0)  #i want to replace all null values in all columns
+#ndf = ndf.na.drop(how="any")  # any (it's by default) means if any one null value u have in any column drop /ignore that column.
+#ndf=ndf.na.drop(how="all") # all means if all values are nulls at that time only i want to drop, at least one column having value don't drop.. in this scenario use all for example check next cell: for more info
+ndf.show()
+
+mshost = "jdbc:sqlserver://msserver.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:1433;databaseName=muralidb;encrypt=true;trustServerCertificate=true"
+msconfigs = {
+    "url": mshost,
+    "user": "admin",
+    "password": "mypassword",
+    "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+
+}
+ndf.write.mode("append").format("jdbc").options(**msconfigs).option("dbtable", "emp_target").save()

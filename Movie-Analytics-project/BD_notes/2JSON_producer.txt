@@ -1,0 +1,16 @@
+from kafka import KafkaProducer
+from kafka.errors import KafkaError
+import os
+from time import sleep
+import json
+from json import dumps
+producer = KafkaProducer(bootstrap_servers=['localhost:9092'])
+
+path="E:\\bigdata\\nifi-1.20.0\\nifilive\\"
+file_list = os.listdir(path)
+for fil in file_list:
+    with open(path+str(fil), errors="ignore", mode='r') as f:
+        line = f.read()
+        print(line)
+        producer.send("nifilogs",line.encode('utf-8'))
+        sleep(3)

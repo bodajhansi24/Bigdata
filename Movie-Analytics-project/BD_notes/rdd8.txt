@@ -1,0 +1,24 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+sc=spark.sparkContext
+
+data=r"E:\bigdata\drivers\wcdata.txt"
+ardd = sc.textFile(data)
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download('stopwords')
+skip = stopwords.words('english')
+print(skip)
+
+#map.. split data and result in the form of Array/list ..
+#skip=['the','by','=','The','or','a','','to','of','in','and','is','on','be','for','an','can','that','are','as']
+proc = ardd.flatMap(lambda x:x.split(" ")).filter(lambda x: x not in skip).map(lambda x:(x,1)).reduceByKey(lambda x,y:x+y).sortBy(lambda x:x[1],ascending=False)
+#flatMap: map + flatten=flatmap ... apply a map next flatter the results(remove array etc)
+#['Overview']
+#['At', 'a', 'high', 'level,', 'every', 'Spark', 'application', 'consists', 'of', 'a', 'driver', 'program', 'that', 'runs', 'the', 'user’s', 'main', 'function', 'and', 'executes', 'various', 'parallel', 'operations', 'on', 'a', 'cluster.', 'The', 'main', 'abstraction', 'Spark', 'provides', 'is', 'a', 'resilient', 'distributed', 'dataset', '(RDD),', 'which', 'is', 'a', 'collection', 'of', 'elements', 'partitioned', 'across', 'the', 'nodes', 'of', 'the', 'cluster', 'that', 'can', 'be', 'operated', 'on', 'in', 'parallel.', 'RDDs', 'are', 'created', 'by', 'starting', 'with', 'a', 'file', 'in', 'the', 'Hadoop', 'file', 'system', '(or', 'any', 'other', 'Hadoop-supported', 'file', 'system),', 'or', 'an', 'existing', 'Scala', 'collection', 'in', 'the', 'driver', 'program,', 'and', 'transforming', 'it.', 'Users', 'may', 'also', 'ask', 'Spark', 'to', 'persist', 'an', 'RDD', 'in', 'memory,', 'allowing', 'it', 'to', 'be', 'reused', 'efficiently', 'across', 'parallel', 'operations.', 'Finally,', 'RDDs', 'automatically', 'recover', 'from', 'node', 'failures.']
+#['']
+for x in proc.take(20):
+    print(x)

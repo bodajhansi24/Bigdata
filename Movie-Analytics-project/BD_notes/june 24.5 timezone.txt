@@ -1,0 +1,10 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local").appName("test").getOrCreate()
+spark.conf.set("spark.sql.session.timeZone", "IST")
+data=r"D:\bigdata\drivers\date_differ_timezone.csv"
+df=spark.read.format("csv").option("header","true").option("inferSchema","true").load(data)
+df.show()
+
+#ndf.show(truncate=False)

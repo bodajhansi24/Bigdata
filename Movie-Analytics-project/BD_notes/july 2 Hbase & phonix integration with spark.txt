@@ -1,0 +1,21 @@
+vi script
+
+
+from pyspark.sql.functions import *
+from pyspark.sql.window import *
+import sys
+import os
+
+spark = SparkSession.builder.master("local").appName("test").getOrCreate()
+data=sys.argv[1]
+tab=sys.argv[2]
+df=spark.read.format("csv").option("header","true").option("sep",",").option("inferSchema","true").load(data)
+#tab=sys.argv[1]
+#df = spark.read.format("org.apache.phoenix.spark").option("table",tab ).option("zkUrl", "localhost:2181").load()
+#ndf=df.select(*(upper(col(c).alias(c) for c in df.columns))
+#ndf = df.toDF(*(upper(col(c).alias(c) for c in df.columns)))
+ndf=df.toDF("FIRST_NAME","LAST_NAME","COMPANY_NAME","ADDRESS","CITY","COUNTY","STATE","ZIP","PHONE1","PHONE2","EMAIL","WEB")
+#ndf = df.toDF(*[re.sub('[^a-zA-Z]', '', x) for x in df.columns])
+
+ndf.show()
+ndf.write.mode("overwrite").format("org.apache.phoenix.spark").option("table",tab ).option("zkUrl", "localhost:2181").save()

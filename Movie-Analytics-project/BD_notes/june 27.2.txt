@@ -1,0 +1,16 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+spark.conf.set("spark.sql.session.timeZone", "IST")
+#host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/mysqldb?user=myuser&password=mypassword&useSSL=false"
+host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?useSSL=false"
+opts= {
+    "url":host,
+    "user":"admin",
+    "password":"mypassword",
+    "driver":"com.mysql.cj.jdbc.Driver"
+}
+df1 = spark.read.format("jdbc").options(**opts).option("dbtable","table1").load()
+
+df1.show()

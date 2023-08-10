@@ -1,0 +1,22 @@
+ vi script
+
+
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+import re
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+spark.sparkContext.setLogLevel("ERROR")
+spark.conf.set("spark.sql.catalog.myCatalog", "com.datastax.spark.connector.datasource.CassandraCatalog")
+
+adf= spark.read.format("org.apache.spark.sql.cassandra").option("table","asl").option("keyspace","cassdb").load()
+edf= spark.read.format("org.apache.spark.sql.cassandra").option("table","emp").option("keyspace","cassdb").load()
+
+jdf = adf.join(edf,adf.name==edf.first_name).drop(adf.name)
+
+jdf.write.mode("append").format("org.apache.spark.sql.cassandra").option("keyspace","cassdb").partitionBy("id").saveAsTable("myCatalog.cassdb.empjoinasl");
+
+adf.show()
+edf.show()
+jdf.show()

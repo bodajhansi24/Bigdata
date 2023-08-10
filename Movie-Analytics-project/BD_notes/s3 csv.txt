@@ -1,0 +1,19 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.sql.functions import *
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+op="s3://avdgroup/output/bankres"
+data="s3://avdgroup/input/bank-full.csv"
+df=spark.read.format("csv").option("header","true").option("sep",";").option("inferSchema","true").load(data)
+df.show()
+res=df.where(col("age")>50)
+res.write.format("csv").option("header","true").save(op)

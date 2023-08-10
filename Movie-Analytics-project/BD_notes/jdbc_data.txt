@@ -1,0 +1,38 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+## @params: [JOB_NAME]
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+
+host="jdbc:mysql://mysqlserver.crznrkkzrz3v.ap-south-1.rds.amazonaws.com/muralidb?useSSL=false"
+opts= {
+    "url":host,
+    "user":"admin",
+    "password":"mypassword",
+    "driver":"com.mysql.cj.jdbc.Driver",
+    "dbtable": "emp"
+    }
+df = spark.read.format("jdbc").options(**opts).load()
+ndf = df.withColumn("sal", col("sal").cast(IntegerType())).withColumn("hiredate", date_format(col("hiredate"), "dd-MMM-yyyy-EEE"))
+
+myopts= {
+    "url":host,
+    "user":"admin",
+    "password":"mypassword",
+    "driver":"com.mysql.cj.jdbc.Driver"
+    }
+
+ndf.write.mode("append").format("jdbc").options(**myopts).option("dbtable", "empres").save()
+
+
+

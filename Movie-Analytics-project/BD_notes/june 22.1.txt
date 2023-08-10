@@ -1,0 +1,34 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+
+data ="D:\\Bigdata\\drivers\\asl.csv"
+df = spark.read.format("csv").option("header","true").option("inferSchema","true").load(data)
+#df.show()
+#res=df.withColumn("grade",when(col("age")<=12,"kid").when((col("age")>12) & (col("age")<30), "youth").when((col("age")>=30) & (col("age")<60),"professional").otherwise("oldaged"))
+#res=df.withColumn("offers",when(col("city").isin("hyd","blr","nyc"),"30% off").when(col("city")=="mas", "20% off").when(col("city").like("%l"),"5% off").otherwise("no offer"))
+#res.show()
+def offer(c):
+    if(c=="hyd"):
+        return "90% off"
+    elif(c=="blr"):
+        return "40% off"
+    elif(c=="mas"):
+        return "20% off"
+    else:
+        return "no offer"
+
+#if no suitable function avail, create ur won python function .. convert to udf (spark support only udf )
+#python function convert to udf
+uoff = udf(offer)
+#res=df.withColumn("weekendoffer",uoff(col("city")))
+#res.show()
+
+#use this udf in spark.sql ... udf register as sql functions
+spark.udf.register("ofr",uoff)
+
+df.createOrReplaceTempView("test")
+res1=spark.sql("select *, ofr(city) todayoffers from test")
+
+res1.show()

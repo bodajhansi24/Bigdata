@@ -1,0 +1,21 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+import configparser
+config = configparser.ConfigParser()
+config.read(r"D:\bigdata\spark-3.1.2-bin-hadoop3.2\allcred.txt")
+host=config.get("mysqlcred","host")
+u=config.get("mysqlcred","username")
+p=config.get("mysqlcred","password")
+d=config.get("mysqlcred","driver")
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+spark.conf.set("spark.sql.session.timeZone", "IST")
+
+#df1 = spark.read.format("jdbc").option("url",host).option("user",u).option("password",p).option("driver",d).option("dbtable","table1").load()
+#df1 = spark.read.format("jdbc").option("url",host).option("user",u).option("password",p).option("driver",d).option("dbtable",qry1).load()
+#df1.show()
+all=["table1","table2","aaaa"]
+for x in all:
+    print("importing data from",x)
+    df = spark.read.format("jdbc").option("url", host).option("user", u).option("password", p).option("driver", d).option("dbtable", x).load()
+    df.show()

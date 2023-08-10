@@ -1,0 +1,28 @@
+import org.apache.spark.sql._
+import org.apache.spark.sql.functions.{col, dense_rank, first, lag, lead, rank}
+import org.apache.spark.sql.expressions._
+import org.apache.spark.sql.expressions.Window._
+object redcsvdata {
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+    spark.sparkContext.setLogLevel("ERROR")
+    val data = "D:\\bigdata\\drivers\\us-500.csv"
+    val df = spark.read.format("csv").option("header", "true").load(data)
+    df.show()
+    //https://spark.apache.org/docs/3.1.2/sql-data-sources-jdbc.html
+    val host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?useSSL=false"
+    val df1=spark.read.format("jdbc").option("url",host)
+      .option("user","admin")
+      .option("password","mypassword")
+      .option("dbtable","table1")
+      .option("driver","com.mysql.cj.jdbc.Driver").load()
+    df1.show()
+    //csv data export to mysql
+    df.write.format("jdbc").option("url",host)
+      .option("user","admin")
+      .option("password","mypassword")
+      .option("dbtable","table9scala")
+      .option("driver","com.mysql.cj.jdbc.Driver").save()
+
+  }
+}

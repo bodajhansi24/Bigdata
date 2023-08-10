@@ -1,0 +1,41 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+data=r"D:\bigdata\drivers\zips.json"
+df=spark.read.format("json").option("mode","DROPMALFORMED").load(data)
+#df.show()
+#data cleaning steps
+df=df.withColumn("loc", explode(col("loc"))).withColumnRenamed("_id","id")\
+    .withColumn("id",col("id").cast(LongType()))\
+    .withColumn("pop",col("pop").cast(IntegerType()))\
+    .withColumn("loc",abs(col("loc")))
+
+#processing steps
+res=df.groupBy("state").agg(count("*").alias("cnt")).orderBy(col("cnt").desc())
+#res.show()
+#df.printSchema()
+#op=r"D:\bigdata\drivers\output\zipsrep200"
+#res.coalesce(1).write.mode("overwrite").format("csv").option("header","true").save(op)
+#res.repartition(1).write.mode("overwrite").format("csv").option("header","true").save(op)
+
+host="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?useSSL=false"
+res.write.mode("overwrite").format("jdbc").option("url",host).option("user","admin").option("password","mypassword")\
+    .option("driver","com.mysql.cj.jdbc.Driver").option("dbtable","table3").save()
+#repartition  can increase or dec partitions but problem is it's wide transformation ... it' shuffle data.
+
+#coalease() if u hae many many small files .. i want to consolidate as 1 or 2 (specified number) of files... use it.
+#it's a narrow transformations so data is not shuffled. coalease only decrease no of partitions not possible to inc partitions
+
+
+#df.show()
+#by default spark input and output are folders..
+#explode ... remove array ... and make each obj  separate like a row..
+
+
+#wide transformation... a function or method shuffle the data to do further processing called wide transformation.
+#let eg: group by, distinct, join ..  so wide transformations dec performance .. so give low priority
+#
+# shuffling: transfer data from one place to another place to do further processing called shuffling
+#narrow transformation: a function or method process without shuffling called narrow transformations.
+#let eg: select(..) .. where ... coalease ... so narrow transformations optimize performance.

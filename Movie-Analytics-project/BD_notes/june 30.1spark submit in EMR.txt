@@ -1,0 +1,21 @@
+spark-submit --master local --deploy-mode client pysparkpoc.py input_path output_path
+
+
+Vi script
+
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+import os
+import re
+import sys
+
+spark = SparkSession.builder.master("local[*]").appName("test").enableHiveSupport().getOrCreate()
+#data=r"C:\bigdata\drivers\world_bank.json"
+data=sys.argv[1]
+output=sys.argv[2]
+df=spark.read.format("csv").option("mode","DROPMALFORMED").option("header","true").option("inferSchema","true").load(data)
+df.show()
+df.write.mode("overwrite").format("csv").saveAsTable(output)                                    ------managed table
+#df.write.mode("overwrite").format("orc").option("path","/exttab/"+output).saveAsTable(output)  ------external table

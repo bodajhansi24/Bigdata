@@ -1,0 +1,25 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.streaming import *
+spark = SparkSession.builder.master("local[2]").config("spark.sql.streaming.forceDeleteTempCheckpointLocation","true").appName("test").getOrCreate()
+
+myconf = {
+    "url":"jdbc:mysql://mysqldb.ckze5eqt6umg.ap-south-1.rds.amazonaws.com:3306/mysqldb?useSSL=false",
+    "user":"myuser",
+    "password":"mypassword",
+    "driver":"com.mysql.cj.jdbc.Driver"
+}
+url="ec2-65-1-110-153.ap-south-1.compute.amazonaws.com"
+lines = spark.readStream.format("socket").option("host", url) \
+    .option("port", 2222).load()
+res=lines.withColumn("name", split(col("value"),",")[0])\
+    .withColumn("age", split(col("value"),",")[1])\
+    .withColumn("city",split(col("value"),",")[2]).drop("value")
+
+#res.writeStream.outputMode("append").format("console").start().awaitTermination()
+def foreach_batch_function(df, epoch_id):
+    # Transform and write batchDF
+    df.write.mode("append").format("jdbc").options(**myconf).option("dbtable","july12_structure_streaming").save()
+    pass
+
+res.writeStream.foreachBatch(foreach_batch_function).start().awaitTermination()

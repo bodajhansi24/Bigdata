@@ -1,0 +1,31 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
+#go to ur email copy snowflake URL... paste in 'sfURL'
+#username located homepage left side ur name click> profile > here u have username
+#in worksheet above ur sql queries  **.public (beside setting) its' ur database
+# 99% schema and warehouse same  "public",  "COMPUTE_WH"
+#based on ur req u r calling appropriate table in sftable option
+sfOptions = {
+  "sfURL" : "drddvca-aab26434.snowflakecomputing.com",
+  "sfUser" : "SHOAIBSHAIK829",
+  "sfPassword" : "Jan-1-2023",
+  "sfDatabase" : "shoaibshaik",
+  "sfSchema" : "public",
+  "sfWarehouse" : "COMPUTE_WH"
+}
+df = spark.read.format(SNOWFLAKE_SOURCE_NAME)\
+    .options(**sfOptions)\
+    .option("dbtable", "asl")\
+    .option("autopushdown", "off")\
+    .load()
+#df.show()
+#read local bank_full.csv data store in snowflake
+
+data=r"E:\bigdata\drivers\bank-full.csv"
+df=spark.read.format("csv").option("sep",";").option("header","true").option("inferSchema","true").load(data)
+
+df.write.mode("append").format(SNOWFLAKE_SOURCE_NAME).options(**sfOptions)\
+    .option("dbtable", "banktab123").save()

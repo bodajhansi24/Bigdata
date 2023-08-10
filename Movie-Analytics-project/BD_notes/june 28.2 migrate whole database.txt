@@ -1,0 +1,39 @@
+ 
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+
+myhost="jdbc:mysql://mysql-db.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:3306/dbase1?useSSL=false"
+myconfigs = {
+    "url": myhost,
+    "user": "admin",
+    "password": "mypassword",
+    "driver": "com.mysql.jdbc.Driver"
+}
+qry = "(select table_name from information_schema.tables where TABLE_SCHEMA='dbase1') tmp"
+df = spark.read.format("jdbc").options(**myconfigs).option("dbtable", qry).load()
+all = [x[0] for x in df.collect()]
+print(all)
+
+'''['BONUS', 'CUSTOMER', 'DEMO', 'DEPTnew', 'DUMMY', 'EMP1', 'EMPnew', 'EMPnew1', 'ITEM', 'MYSQLSTOREINORACLE', 'ORD',
+ 'PRICE', 'PRODUCT', 'SALGRADE', 'aaaa', 'abcd', 'apple', 'asltabsuperset', 'banktab', 'bktabglue', 'charupoc1',
+ 'csv_data', 'delhidata', 'dept', 'emp', 'emp1', 'emp_practice', 'empcj', 'empnew', 'empsanket', 'emptest', 'hyddata',
+ 'june10livedata', 'kafkalivestreamay25', 'kirtan_suvarna_tab', 'majobpoc', 'mohioc1', 'omkarpoc1', 'rawdata', 'test',
+ 'xmltomysql', 'xmltomysqldb']'''
+
+
+mshost = "jdbc:sqlserver://msserver.crznrkkzrz3v.ap-south-1.rds.amazonaws.com:1433;databaseName=muralidb;encrypt=true;trustServerCertificate=true"
+msconfigs = {
+    "url": mshost,
+    "user": "admin",
+    "password": "mypassword",
+    "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+}
+
+for x in all:
+    mydf=spark.read.format("jdbc").options(**myconfigs).option("dbtable",x).load()
+    mydf=mydf.na.drop()
+    mydf.show()
+    if(mydf.count()>0):
+        mydf.write.mode("append").format("jdbc").options(**msconfigs).option("dbtable",x).save()

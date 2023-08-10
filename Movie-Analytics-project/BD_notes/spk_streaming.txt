@@ -1,0 +1,23 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+from pyspark.streaming import *
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+
+ssc = StreamingContext(spark.sparkContext, 10)
+#spark streaming context .... 10 means it's batch time.. wait 10 sec, within 10 sec how much data u got it that data make as a batch. called micro batch.
+#collection of these micro batches (it's within spark Streaming lib) called Dstream api ..
+#finally these dstreams forward to spark core. at thattime it's convert to rdd. rdds only processed.
+
+lines = ssc.socketTextStream("ec2-3-110-49-223.ap-south-1.compute.amazonaws.com", 1111)
+#socketTextStream .... ur reading data from something server "localhost" and something port number (9999)
+#Now if u r using ec2 .. must go to security group add above port number with 0.0.0.0/0 othewise ur not receive data.
+
+
+lines.pprint()
+ssc.start()
+ssc.awaitTermination()
+
+
+#sparkContext used to create rdd api.
+#sqlContext used to create dataframe api
+#sparkStreamingContext used to create dstream api.

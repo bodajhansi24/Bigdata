@@ -1,0 +1,13 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[2]").appName("test").getOrCreate()
+sc=spark.sparkContext
+data=r"E:\bigdata\drivers\asl.csv"
+ardd = sc.textFile(data)
+#select city, count(*) cnt from emp group by city order by cnt desc
+proc = ardd.filter(lambda x:"age" not in x).map(lambda x:x.split(","))\
+    .map(lambda x:(x[2],1)).reduceByKey(lambda x,y:x+y).sortBy(lambda x:x[1],ascending=False)
+
+#if u want to group the values must use reduceByKey.before use reduceBykey data must be key value format.
+#based on the same key, process the value. means

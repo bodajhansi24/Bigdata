@@ -1,0 +1,30 @@
+import re
+
+log_line = '103.94.51.112 - - [13/Jul/2023:02:20:10 +0000] "GET / HTTP/1.1" 200 3460 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"'
+
+pattern = r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+-\s+-\s+\[(\d{2}/\w+/\d{4}:\d{2}:\d{2}:\d{2}\s[+-]\d{4})\]\s+"(\w+)\s+(/\S*)\s+(\S+)"\s+(\d{3})\s+(\d+)\s+"([^"])"\s+"([^"])"'
+
+match = re.match(pattern, log_line)
+
+if match:
+    ip_address = match.group(1)
+    timestamp = match.group(2)
+    http_method = match.group(3)
+    request_path = match.group(4)
+    http_version = match.group(5)
+    response_code = match.group(6)
+    response_size = match.group(7)
+    referer = match.group(8)
+    user_agent = match.group(9)
+
+    print("IP Address:", ip_address)
+    print("Timestamp:", timestamp)
+    print("HTTP Method:", http_method)
+    print("Request Path:", request_path)
+    print("HTTP Version:", http_version)
+    print("Response Code:", response_code)
+    print("Response Size:", response_size)
+    print("Referer:", referer)
+    print("User Agent:", user_agent)
+else:
+    print("No match found.")

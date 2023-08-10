@@ -1,0 +1,22 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+host="jdbc:mysql://mysqldb.ckze5eqt6umg.ap-south-1.rds.amazonaws.com:3306/mysqldb?useSSL=false"
+mshost="jdbc:sqlserver://mssqldb.copbltkbwrvf.ap-south-1.rds.amazonaws.com:1433;databaseName=saniadb?encrypt=true;trustServerCertificate=true;"
+#tabs=['emp','dept','hyddata']
+qry="(SELECT table_name FROM INFORMATION_SCHEMA.TABLES where TABLE_SCHEMA='mysqldb') tmp"
+adf=spark.read.format("jdbc").option("url",host)\
+        .option("user","myuser").option("password","mypassword")\
+        .option("dbtable",qry).option("driver","com.mysql.jdbc.Driver").load()
+
+tabs = [x[0] for x in adf.collect()]
+print(tabs)
+
+for x in tabs:
+    print("importing table: ",x)
+    df=spark.read.format("jdbc").option("url",host)\
+        .option("user","myuser").option("password","mypassword")\
+        .option("dbtable",x).option("driver","com.mysql.jdbc.Driver").load()
+    df.show()
+    df.write.mode("append").option("url",mshost).option("user","msuser").option("password","mspassword").option("dbtable",x).option("driver","com.microsoft.sqlserver.jdbc.SQLServerDriver").save()

@@ -1,0 +1,44 @@
+Context... a nutshell create diff api/products called context
+
+coconut shell..+water == coconut water (product)
+pearl,+ water == pearl
+pepsi bootle + water =softdrink
+water + body = live
+water + factory = poision
+
+
+sparkContext ...+ java obj = rdd api
+sqlContext + java obj = dataframe api
+sparkSession+javaobj = dataset api
+ssc+java obj = dstream
+
+
+sparkContext... entry point to do anything in spark.
+it's used to create RDDs.SparkContext only used to connect cluster manager. Cluster manager allocate resources within cluster.
+
+
+
+by default rdd support text or csv format data only.
+Json, orc,parquet, avro orany other format not supported.
+use dataframe to support all those.
+
+sparkContext used to create rdd
+sqlContext used to create dataframe
+sparkStreamingContext used to create dStream api
+
+instead of using 3 contexts use unified context called sparkSession ...unify sparkContext,SqlContext,SSC..
+ur able to process any data, unstructure (rdd), structure data (dataframe) , live data (dstream)..
+spark 2.x onwards sparkSession available.
+
+
+
+
+
+
+
+Driver program ... it's nothing but ur writing pyspark code. in spark terminology it's called driver program. Where is driver program reside, that node/server called driver node.
+
+
+
+Spark context available as 'sc' 
+Spark session available as 'spark'

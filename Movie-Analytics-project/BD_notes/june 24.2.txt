@@ -1,0 +1,15 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+from pyspark.sql.window import *
+
+spark = SparkSession.builder.master("local[*]").appName("test").getOrCreate()
+data=r"D:\bigdata\drivers\empmysql.csv"
+df=spark.read.format("csv").option("header","true").option("inferSchema","true").load(data)
+
+#win=Window.orderBy(col("sal").desc())
+win=Window.partitionBy(col("ename")).orderBy(col("sal").desc())
+
+#ndf=df.orderBy(col("sal").desc())
+ndf=df.withColumn("rno",row_number().over(win)).where(col("rno")==1)
+ndf.show()

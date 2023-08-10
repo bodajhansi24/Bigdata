@@ -1,0 +1,24 @@
+from pyspark.sql import *
+from pyspark.sql.functions import *
+import pandas as pd
+spark = SparkSession.builder.master("local").appName("test").getOrCreate()
+data=r"D:\bigdata\drivers\sampleexcel-5000.xls"
+pdf=pd.read_excel(data)
+#print(pdf)
+# pandas dataframe convert to spark dataframe
+df=spark.createDataFrame(pdf)
+ndf=df.withColumn("Date",to_date(col("Date"),"dd/MM/yyyy")).withColumnRenamed("Unnamed: 0","rno")
+ndf.show(truncate=False)
+
+
+
+url="https://vincentarelbundock.github.io/Rdatasets/csv/AER/BankWages.csv"
+c=pd.read_csv(url)
+df=spark.createDataFrame(c).withColumnRenamed("Unnamed: 0","rno")
+df.show()
+
+joindf = ndf.join(df,ndf.rno==df.rno,"inner").drop("gender")
+joindf.show()
+#spark dataframe convert to python dataframe use toPandas()
+op=r"D:\bigdata\drivers\output\excelurl.csv"
+joindf.toPandas().to_csv(op)

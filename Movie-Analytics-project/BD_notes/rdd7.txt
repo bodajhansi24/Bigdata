@@ -1,0 +1,8 @@
+#if u want to group by must have key, value format
+
+'''
+('blr', 1)x
+('blr', 1)y ..x+y (1+1)=2 (x)
+('blr', 1)(y) ... x+y..3(x)
+(blr,1) (y)..4
+.reduceByKey(lambda x,y:x+y)'''
